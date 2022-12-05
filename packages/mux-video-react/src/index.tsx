@@ -36,6 +36,7 @@ const MuxVideo = React.forwardRef<HTMLVideoElement | undefined, Partial<Props>>(
     children,
     autoPlay,
     preload,
+    videoQuality = -1,
     ...restProps
   } = props;
 
@@ -48,6 +49,17 @@ const MuxVideo = React.forwardRef<HTMLVideoElement | undefined, Partial<Props>>(
   useEffect(() => {
     setSrc(toMuxVideoURL(playbackId) ?? outerSrc);
   }, [outerSrc, playbackId]);
+
+  useEffect(() => {
+    if (
+      playbackCoreRef &&
+      playbackCoreRef.current &&
+      playbackCoreRef.current.engine &&
+      playbackCoreRef.current.engine.currentLevel
+    ) {
+      playbackCoreRef.current.engine.currentLevel = videoQuality;
+    }
+  }, [videoQuality]);
 
   useEffect(() => {
     const propsWithState = {

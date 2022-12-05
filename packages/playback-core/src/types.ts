@@ -126,6 +126,7 @@ export type MuxMediaPropTypes = {
   streamType: ValueOf<StreamTypes>;
   startTime: HlsConfig['startPosition'];
   autoPlay?: Autoplay;
+  videoQuality?: number;
   autoplay?: Autoplay;
   preferCmcd: ValueOf<CmcdTypes> | undefined;
 };
