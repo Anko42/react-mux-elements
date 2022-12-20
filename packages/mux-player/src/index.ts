@@ -126,11 +126,6 @@ function getProps(el: MuxPlayerElement, state?: any): MuxTemplateProps {
     playbackRates: el.getAttribute(PlayerAttributes.PLAYBACK_RATES),
     customDomain: el.getAttribute(MuxVideoAttributes.CUSTOM_DOMAIN) ?? undefined,
     playerSize: getPlayerSize(el.mediaController ?? el),
-    // NOTE: In order to guarantee all expected metadata props are set "from the outside" when used
-    // and to guarantee they'll all be set *before* the playback id is set, using attr values here (CJP)
-    metadataVideoId: el.getAttribute(MuxVideoAttributes.METADATA_VIDEO_ID),
-    metadataVideoTitle: el.getAttribute(MuxVideoAttributes.METADATA_VIDEO_TITLE),
-    metadataViewerUserId: el.getAttribute(MuxVideoAttributes.METADATA_VIEWER_USER_ID),
     title: el.getAttribute(PlayerAttributes.TITLE),
     ...state,
   };
@@ -179,6 +174,7 @@ class MuxPlayerElement extends VideoApiElement {
     super();
 
     this.attachShadow({ mode: 'open' });
+    this.#setupCSSProperties();
 
     // If the custom element is defined before the <mux-player> HTML is parsed
     // no attributes will be available in the constructor (construction process).
@@ -203,7 +199,7 @@ class MuxPlayerElement extends VideoApiElement {
       customElements.upgrade(this.theme as Node);
       if (!(this.theme instanceof globalThis.HTMLElement)) throw '';
     } catch (error) {
-      logger.error(`<${this.theme?.localName}> failed to upgrade!`);
+      logger.error(`<media-theme> failed to upgrade!`);
     }
 
     try {
@@ -229,16 +225,53 @@ class MuxPlayerElement extends VideoApiElement {
     this.#setUpCaptionsMovement();
   }
 
+  #setupCSSProperties() {
+    // registerProperty will throw if the prop has already been registered
+    // and there's currently no way to check ahead of time
+    try {
+      // @ts-ignore
+      window?.CSS?.registerProperty({
+        name: '--primary-color',
+        syntax: '<color>',
+        inherits: true,
+        initialValue: 'white',
+      });
+      // @ts-ignore
+      window?.CSS?.registerProperty({
+        name: '--secondary-color',
+        syntax: '<color>',
+        inherits: true,
+        initialValue: 'transparent',
+      });
+    } catch (e) {}
+  }
+
   get theme(): Element | null | undefined {
-    return Array.from(this.shadowRoot?.children ?? []).find(({ localName }) => localName.startsWith('media-theme-'));
+    return this.shadowRoot?.querySelector('media-theme');
   }
 
   get mediaController(): MediaController | null | undefined {
     return this.theme?.shadowRoot?.querySelector('media-controller');
   }
 
+  get metadataFromAttrs() {
+    return this.getAttributeNames()
+      .filter((attrName) => attrName.startsWith('metadata-'))
+      .reduce((currAttrs, attrName) => {
+        const value = this.getAttribute(attrName);
+        if (value !== null) {
+          currAttrs[attrName.replace(/^metadata-/, '').replace(/-/g, '_')] = value;
+        }
+        return currAttrs;
+      }, {} as { [key: string]: string });
+  }
+
   connectedCallback() {
     this.#renderChrome();
+    const muxVideo = this.shadowRoot?.querySelector('mux-video') as MuxVideoElement;
+    if (muxVideo) {
+      muxVideo.metadata = this.metadataFromAttrs;
+    }
     this.#initResizing();
   }
 
@@ -1084,7 +1117,7 @@ class MuxPlayerElement extends VideoApiElement {
       logger.error('underlying media element missing when trying to set metadata. metadata will not be set.');
       return;
     }
-    this.media.metadata = val;
+    this.media.metadata = { ...this.metadataFromAttrs, ...val };
   }
 
   /**
