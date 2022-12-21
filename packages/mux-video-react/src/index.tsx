@@ -36,7 +36,7 @@ const MuxVideo = React.forwardRef<HTMLVideoElement | undefined, Partial<Props>>(
     children,
     autoPlay,
     preload,
-    videoQuality = -1,
+    videoQuality = 2,
     ...restProps
   } = props;
 

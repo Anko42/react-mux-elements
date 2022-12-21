@@ -53,7 +53,7 @@
     }
   },
   "dependencies": {
-    "@mux/playback-core": "0.15.0",
+    "@mux/playback-core": "https://github.com/Anko42/react-mux-elements.git",
     "prop-types": "^15.7.2"
   },
   "devDependencies": {
