@@ -1,0 +1,1 @@
+export declare const setupPreload: ({ preload, src }: Partial<HTMLMediaElement>, mediaEl: HTMLMediaElement, hls?: import("hls.js").default | undefined) => (val?: "" | "none" | "metadata" | "auto" | undefined) => void;
